@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClaimCheck Pricing</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=AQjvT3w_Lg2MqYYNB-obb8LJZfkhk2ZGw3dSHf84xuNZLr5BZn9DqPZ1A75BqAP8KyJ6qqDJ5whbYLqJ&vault=true&intent=subscription&currency=USD"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+      text-align: center;
+    }
+    .plan {
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      background: #fff;
+      border-radius: 10px;
+    }
+    .plan h2 { margin-top: 0; }
+    button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>ClaimCheck Subscription Plans</h1>
+
+  <div class="plan">
+    <h2>Free</h2>
+    <p>$0/month</p>
+    <p>✓ 3 charts/mo, no appeals</p>
+    <button onclick="alert('You are using the free plan.')">Use Free</button>
+  </div>
+
+  <div class="plan">
+    <h2>Starter</h2>
+    <p>$19/month</p>
+    <p>✓ 75 charts + 10 appeals</p>
+    <form action="/create-checkout-session" method="POST">
+      <input type="hidden" name="price_id" value="price_1RQOL1Rr09EJwsPTMjcrbg3E" />
+      <button type="submit">Subscribe with Stripe</button>
+    </form>
+    <div id="paypal-starter"></div>
+  </div>
+
+  <div class="plan">
+    <h2>Pro</h2>
+    <p>$49/month</p>
+    <p>✓ 250 charts + 50 appeals</p>
+    <form action="/create-checkout-session" method="POST">
+      <input type="hidden" name="price_id" value="price_1RQONdRr09EJwsPT8qekl1Hr" />
+      <button type="submit">Subscribe with Stripe</button>
+    </form>
+    <div id="paypal-pro"></div>
+  </div>
+
+  <div class="plan">
+    <h2>Enterprise</h2>
+    <p>$149/month</p>
+    <p>✓ Up to 50 charts/day + 300 appeals</p>
+    <form action="/create-checkout-session" method="POST">
+      <input type="hidden" name="price_id" value="price_1RQOQARr09EJwsPT1KRkpurT" />
+      <button type="submit">Subscribe with Stripe</button>
+    </form>
+    <div id="paypal-enterprise"></div>
+  </div>
+
+  <script>
+    paypal.Buttons({
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({
+          'plan_id': 'P-9FV79455AG010050UNAVOQNQ'
+        });
+      },
+      onApprove: function(data, actions) {
+        window.location.href = '/dashboard';
+      }
+    }).render('#paypal-starter');
+
+    paypal.Buttons({
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({
+          'plan_id': 'P-7GV77779MM7972149NAVOQEA'
+        });
+      },
+      onApprove: function(data, actions) {
+        window.location.href = '/dashboard';
+      }
+    }).render('#paypal-pro');
+
+    paypal.Buttons({
+      createSubscription: function(data, actions) {
+        return actions.subscription.create({
+          'plan_id': 'P-7AG2782052508372MNAVOPQQ'
+        });
+      },
+      onApprove: function(data, actions) {
+        window.location.href = '/dashboard';
+      }
+    }).render('#paypal-enterprise');
+  </script>
+</body>
+</html>
