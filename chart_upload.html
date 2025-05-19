@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ClaimCheck AI</title>
+</head>
+<body>
+  <h2>🔐 ClaimCheck Login</h2>
+  <form id="loginForm">
+    <label>Username:</label>
+    <input type="text" id="username" required>
+    <br>
+    <label>Password:</label>
+    <input type="password" id="password" required>
+    <br>
+    <input type="checkbox" id="agreeTerms" required>
+    <label for="agreeTerms">
+      I agree to the <a href="terms.html" target="_blank">Terms of Use</a> and Privacy Policy
+    </label>
+    <br>
+    <button type="submit">Login</button>
+  </form>
+  <p id="loginStatus"></p>
+
+  <!-- 💳 Subscription area -->
+  <div style="border: 1px solid #ccc; padding: 10px; margin-top: 15px;">
+    <h3>💼 ClaimCheck Pro Subscription</h3>
+    <p>Upgrade to Pro to unlock bulk chart reviews, export options, and priority appeal templates.</p>
+    <button onclick="alert('Subscription system coming soon!')">Pay to Subscribe</button>
+  </div>
+
+  <hr>
+
+  <h2>📋 Upload or Paste Clinical Chart</h2>
+  <form id="chartForm">
+    <label>Upload a file (.txt):</label>
+    <input type="file" id="fileInputChart" accept=".txt">
+    <br><br>
+    <label>Or paste chart text:</label><br>
+    <textarea id="chartText" rows="10" cols="80" placeholder="Paste chart text here..."></textarea>
+    <br><br>
+    <button type="submit">Submit Chart for Coding</button>
+  </form>
+
+  <h3>🧠 AI Coding Result:</h3>
+  <pre id="chartResultBox" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></pre>
+  <hr>
+
+  <h2>✉️ Upload or Paste Denial/EOB for Appeal</h2>
+  <form id="appealForm">
+    <label>Upload a file (.txt):</label>
+    <input type="file" id="fileInputAppeal" accept=".txt">
+    <br><br>
+    <label>Or paste denial text:</label><br>
+    <textarea id="appealText" rows="10" cols="80" placeholder="Paste denial or EOB text here..."></textarea>
+    <br><br>
+    <button type="submit">Generate Appeal Letter</button>
+  </form>
+
+  <h3>📄 AI Appeal Letter:</h3>
+  <pre id="appealResultBox" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></pre>
+
+  <script>
+    let token = localStorage.getItem('claimcheck_token') || null;
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      if (!document.getElementById('agreeTerms').checked) {
+        alert("You must agree to the Terms of Use before continuing.");
+        return;
+      }
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch("http://127.0.0.1:8000/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        token = data.access_token;
+        localStorage.setItem('claimcheck_token', token);
+        document.getElementById('loginStatus').textContent = "✅ Logged in successfully!";
+      } else {
+        document.getElementById('loginStatus').textContent = "❌ Login failed.";
+      }
+    });
+
+    // Process Chart
+    document.getElementById('chartForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const file = document.getElementById('fileInputChart').files[0];
+      const chartText = document.getElementById('chartText').value;
+
+      if (!token) return alert("Please log in first.");
+
+      const formData = new FormData();
+      if (file) formData.append("file", file);
+      if (chartText.trim()) formData.append("chart_text", chartText);
+
+      const response = await fetch("http://127.0.0.1:8000/process-chart", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById('chartResultBox').textContent =
+        response.ok ? data.coding_result : `❌ Error ${response.status}: ${JSON.stringify(data)}`;
+    });
+
+    // Generate Appeal
+    document.getElementById('appealForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const file = document.getElementById('fileInputAppeal').files[0];
+      const denialText = document.getElementById('appealText').value;
+
+      if (!token) return alert("Please log in first.");
+
+      const formData = new FormData();
+      if (file) formData.append("file", file);
+      if (denialText.trim()) formData.append("denial_text", denialText);
+
+      const response = await fetch("http://127.0.0.1:8000/generate-appeal", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById('appealResultBox').textContent =
+        response.ok ? data.appeal_letter : `❌ Error ${response.status}: ${JSON.stringify(data)}`;
+    });
+  </script>
+</body>
+</html>
