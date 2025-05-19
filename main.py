@@ -7,7 +7,6 @@ from typing import Optional, Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from fastapi.staticfiles import StaticFiles
 import openai
 import stripe
 import os
@@ -35,7 +34,9 @@ models.Base.metadata.create_all(bind=database.engine)
 @app.get("/pricing", response_class=HTMLResponse)
 def serve_pricing():
     try:
-        with open("pricing.html", "r", encoding="utf-8") as f:
+        base_dir = os.path.dirname(__file__)
+        file_path = os.path.join(base_dir, "pricing.html")
+        with open(file_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except Exception as e:
         return HTMLResponse(content=f"<h1>Error loading pricing.html: {e}</h1>", status_code=500)
