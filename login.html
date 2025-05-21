@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClaimCheck Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; }
+    input { display: block; margin: 10px 0; padding: 8px; width: 300px; }
+    button { padding: 10px 20px; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Login to ClaimCheck</h1>
+
+  <form id="loginForm">
+    <label>Username</label>
+    <input type="text" id="username" required />
+    <label>Password</label>
+    <input type="password" id="password" required />
+    <button type="submit">Login</button>
+    <p class="error" id="errorMsg"></p>
+  </form>
+
+  <p>Don’t have an account? <a href="/register">Register here</a>.</p>
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+
+      errorMsg.textContent = "";
+
+      try {
+        const response = await fetch("/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorMsg.textContent = data.detail || data.error || "Invalid login.";
+        } else {
+          localStorage.setItem("access_token", data.access_token);
+          window.location.href = "/chart-upload";
+        }
+      } catch (err) {
+        errorMsg.textContent = "❌ Network error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
