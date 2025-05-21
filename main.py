@@ -1,15 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, Form, Request, Depends
+from fastapi import FastAPI, UploadFile, File, Form, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from dotenv import load_dotenv
-from typing import Optional, Union
-from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from typing import Optional, Union
+from dotenv import load_dotenv
+import os
 import openai
 import stripe
-import os
 
 import models, schemas, database
 from auth import get_password_hash, authenticate_user, create_access_token, get_current_user
@@ -29,20 +27,8 @@ app.add_middleware(
 )
 
 models.Base.metadata.create_all(bind=database.engine)
-import logging
-# Serve /pricing page
-@app.get("/pricing", response_class=HTMLResponse)
-def serve_pricing():
-    try:
-        base_dir = os.path.dirname(__file__)
-        file_path = os.path.join(base_dir, "pricing.html")
-        with open(file_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except Exception as e:
-        return HTMLResponse(content=f"<h1>Error loading pricing.html: {e}</h1>", status_code=500)
 
-from fastapi.responses import HTMLResponse
-
+# Homepage
 @app.get("/", response_class=HTMLResponse)
 def homepage():
     try:
@@ -53,19 +39,44 @@ def homepage():
     except Exception as e:
         return HTMLResponse(content=f"<h1>Error loading homepage: {e}</h1>", status_code=500)
 
+# Pricing Page
+@app.get("/pricing", response_class=HTMLResponse)
+def serve_pricing():
+    try:
+        base_dir = os.path.dirname(__file__)
+        file_path = os.path.join(base_dir, "pricing.html")
+        with open(file_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Error loading pricing.html: {e}</h1>", status_code=500)
+
+# JWT-Protected Chart Upload UI
+@app.get("/chart-upload", response_class=HTMLResponse)
+def serve_chart_upload(user=Depends(get_current_user)):
+    try:
+        base_dir = os.path.dirname(__file__)
+        file_path = os.path.join(base_dir, "chart_upload.html")
+        with open(file_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Error loading chart upload page: {e}</h1>", status_code=500)
+
+# API Key Fetcher (optional)
 @app.get("/apikey")
 def get_key():
     return {"api_key": os.getenv("OPENAI_API_KEY")}
 
+# Registration Endpoint
 @app.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     hashed_password = get_password_hash(user.password)
-    db_user = models.User(username=user.username, hashed_password=hashed_password)
+    db_user = models.User(username=user.username, password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return {"message": "User registered successfully"}
 
+# Login → Token
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -74,10 +85,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
+# CPT Code Processing Endpoint
 @app.post("/process-chart")
 async def process_chart(
     file: Union[UploadFile, None] = File(default=None),
-    chart_text: Optional[str] = Form(default=None)
+    chart_text: Optional[str] = Form(default=None),
+    user=Depends(get_current_user)
 ):
     try:
         if file and file.filename:
@@ -105,8 +118,9 @@ async def process_chart(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+# EOB Review
 @app.post("/analyze-eob")
-async def analyze_eob(file: UploadFile = File(...), contract_percent: float = Form(...)):
+async def analyze_eob(file: UploadFile = File(...), contract_percent: float = Form(...), user=Depends(get_current_user)):
     content = await file.read()
     text_data = content.decode(errors="ignore")[:4000]
 
@@ -120,10 +134,12 @@ async def analyze_eob(file: UploadFile = File(...), contract_percent: float = Fo
     reply = response.choices[0].message.content
     return {"eob_analysis": reply}
 
+# Appeal Generator
 @app.post("/generate-appeal")
 async def generate_appeal(
     file: Union[UploadFile, None] = File(default=None),
-    denial_text: Optional[str] = Form(default=None)
+    denial_text: Optional[str] = Form(default=None),
+    user=Depends(get_current_user)
 ):
     try:
         if file and file.filename:
@@ -146,6 +162,7 @@ async def generate_appeal(
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+# Stripe Checkout
 @app.post("/create-checkout-session")
 async def create_checkout_session(request: Request):
     form = await request.form()
@@ -156,8 +173,8 @@ async def create_checkout_session(request: Request):
 
     try:
         checkout_session = stripe.checkout.Session.create(
-            success_url="https://claimcheck.online/dashboard",
-            cancel_url="https://claimcheck.online/pricing",
+            success_url="https://www.claimcheck.online/dashboard",
+            cancel_url="https://www.claimcheck.online/pricing",
             payment_method_types=["card"],
             mode="subscription",
             line_items=[{
