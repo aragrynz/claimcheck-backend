@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 models.Base.metadata.create_all(bind=database.engine)
-
+import logging
 # Serve /pricing page
 @app.get("/pricing", response_class=HTMLResponse)
 def serve_pricing():
@@ -41,9 +41,17 @@ def serve_pricing():
     except Exception as e:
         return HTMLResponse(content=f"<h1>Error loading pricing.html: {e}</h1>", status_code=500)
 
-@app.get("/")
-def read_root():
-    return {"message": "ClaimCheck AI backend is running!"}
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+def homepage():
+    try:
+        base_dir = os.path.dirname(__file__)
+        file_path = os.path.join(base_dir, "index.html")
+        with open(file_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Error loading homepage: {e}</h1>", status_code=500)
 
 @app.get("/apikey")
 def get_key():
