@@ -12,6 +12,11 @@ import openai
 import stripe
 import os
 
+# TEMP: Delete existing SQLite DB to force schema refresh
+if os.path.exists("users.db"):
+    os.remove("users.db")
+    print("🗑️ users.db deleted – will regenerate from models.py")
+    
 import models, schemas, database
 from auth import get_password_hash, authenticate_user, create_access_token, get_current_user
 
