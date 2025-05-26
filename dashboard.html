@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClaimCheck Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; }
+    a { display: block; margin: 15px 0; color: blue; }
+    button { margin-top: 20px; padding: 8px 15px; }
+  </style>
+</head>
+<body>
+
+  <h1>Welcome to your ClaimCheck Dashboard</h1>
+  <p>You are logged in. Choose a tool:</p>
+
+  <a href="/chart-upload">📋 Upload Chart & Audit</a>
+  <a href="/pricing">💳 View or Manage Subscription</a>
+  <a href="/terms">📜 Terms & Conditions</a>
+
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      window.location.href = "/login";
+    }
+
+    function logout() {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
+  </script>
+
+</body>
+</html>

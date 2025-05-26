@@ -33,27 +33,20 @@
     section {
       margin-top: 40px;
     }
+    #logoutBtn {
+      float: right;
+      background-color: #ccc;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <button id="logoutBtn" onclick="logout()">Logout</button>
   <h1>ClaimCheck: Secure Medical Coding & Appeals</h1>
 
-  <section>
-    <h2>Login</h2>
-    <form id="loginForm">
-      <label>Username:</label>
-      <input type="text" id="username" required />
-      <label>Password:</label>
-      <input type="password" id="password" required />
-      <button type="submit">Login</button>
-    </form>
-    <p class="error" id="loginError"></p>
-  </section>
-
-  <section id="secureSection" style="display: none;">
-    <hr />
-
+  <section id="secureSection">
     <h2>Upload or Paste Clinical Chart</h2>
     <form id="chartForm">
       <label>Upload a chart (.txt):</label><br />
@@ -80,42 +73,17 @@
   </section>
 
   <script>
-    let accessToken = "";
+    const accessToken = localStorage.getItem("access_token");
 
-    // LOGIN
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const loginError = document.getElementById('loginError');
+    // Redirect if not logged in
+    if (!accessToken) {
+      window.location.href = "/login";
+    }
 
-      loginError.textContent = "";
-
-      try {
-        const response = await fetch('https://claimcheck-backend.onrender.com/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams({
-            username,
-            password
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          accessToken = data.access_token;
-          document.getElementById('secureSection').style.display = 'block';
-          document.getElementById('loginForm').style.display = 'none';
-        } else {
-          loginError.textContent = data.detail || "Login failed.";
-        }
-      } catch (err) {
-        loginError.textContent = "❌ Network error: " + err.message;
-      }
-    });
+    function logout() {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
 
     // CHART SUBMISSION
     document.getElementById('chartForm').addEventListener('submit', async function (e) {
@@ -138,7 +106,7 @@
       }
 
       try {
-        const response = await fetch('https://claimcheck-backend.onrender.com/process-chart', {
+        const response = await fetch('/process-chart', {
           method: 'POST',
           body: formData,
           headers: {
@@ -179,7 +147,7 @@
       }
 
       try {
-        const response = await fetch('https://claimcheck-backend.onrender.com/generate-appeal', {
+        const response = await fetch('/generate-appeal', {
           method: 'POST',
           body: formData,
           headers: {

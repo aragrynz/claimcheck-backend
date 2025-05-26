@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel | ClaimCheck</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f5f5f5; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Panel</h1>
+  <p>This page is restricted to admin users only.</p>
+  <button onclick="logout()">Logout</button>
+  <div id="adminSection" style="margin-top: 30px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Plan</th>
+          <th>Chart Count</th>
+          <th>Appeal Count</th>
+          <th>Last Reset</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+
+  <p class="error" id="errorMsg"></p>
+
+  <script>
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      window.location.href = "/login";
+    }
+
+    function logout() {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
+
+    async function fetchUsers() {
+      try {
+        const res = await fetch("/admin/users", {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        if (!res.ok) {
+          throw new Error("Access denied or session expired.");
+        }
+
+        const users = await res.json();
+        const table = document.getElementById("userTable");
+        users.forEach(user => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.plan}</td>
+            <td>${user.chart_count}</td>
+            <td>${user.appeal_count}</td>
+            <td>${user.last_reset}</td>
+          `;
+          table.appendChild(row);
+        });
+
+      } catch (err) {
+        document.getElementById("errorMsg").textContent = "❌ " + err.message;
+      }
+    }
+
+    fetchUsers();
+  </script>
+
+</body>
+</html>

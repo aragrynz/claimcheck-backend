@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ClaimCheck Login</title>
+  <title>Login | ClaimCheck</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { font-family: Arial, sans-serif; padding: 40px; }
@@ -12,6 +12,7 @@
   </style>
 </head>
 <body>
+
   <h1>Login to ClaimCheck</h1>
 
   <form id="loginForm">
@@ -24,7 +25,14 @@
   </form>
 
   <p>Don’t have an account? <a href="/register">Register here</a>.</p>
+
   <script>
+    // Redirect to dashboard if already logged in
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      window.location.href = "/dashboard";
+    }
+
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -46,15 +54,16 @@
         const data = await response.json();
 
         if (!response.ok) {
-          errorMsg.textContent = data.detail || data.error || "Invalid login.";
+          errorMsg.textContent = data.detail || data.error || "❌ Invalid login.";
         } else {
           localStorage.setItem("access_token", data.access_token);
-          window.location.href = "/chart-upload";
+          window.location.href = "/dashboard";
         }
       } catch (err) {
         errorMsg.textContent = "❌ Network error: " + err.message;
       }
     });
   </script>
+
 </body>
 </html>
