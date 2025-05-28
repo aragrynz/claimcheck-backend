@@ -8,15 +8,16 @@ from sqlalchemy.orm import Session as BackgroundSession, Session
 from datetime import datetime
 from dotenv import load_dotenv
 from typing import Optional, Union
-import openai
 import stripe
 import os
 
 import models, schemas, database
 from auth import get_password_hash, authenticate_user, create_access_token, get_current_user
+from openai import OpenAI
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=openai_api_key)
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
@@ -157,7 +158,7 @@ async def process_chart(
         else:
             return JSONResponse(status_code=400, content={"error": "Please upload a file or provide chart text."})
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a certified medical coder. Determine CPT, ICD-10, and HCPCS codes."},
@@ -190,7 +191,7 @@ async def generate_appeal(
         else:
             return JSONResponse(status_code=400, content={"error": "Please upload a file or provide appeal text."})
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a healthcare appeal writer. Draft a dispute letter."},
