@@ -1,4 +1,4 @@
-# auth.py (complete with login-based auto-reset)
+# auth.py (secure and complete)
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -6,8 +6,12 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 import models, database
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import os
 
-SECRET_KEY = "your_secret_key_here"
+# Load secrets from .env file
+load_dotenv()
+SECRET_KEY = os.getenv("dmhSiWsj_c4DTQ3vS24KvEDMv4q_aZP-3eSOkfm5yMg")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -24,15 +28,6 @@ def authenticate_user(db: Session, username: str, password: str):
     user = db.query(models.User).filter(models.User.username == username).first()
     if not user or not verify_password(password, user.password):
         return False
-
-    # Auto-reset usage counts at login based on month
-    now_month = datetime.utcnow().strftime("%Y-%m")
-    if user.last_reset != now_month:
-        user.chart_count = 0
-        user.appeal_count = 0
-        user.last_reset = now_month
-        db.commit()
-
     return user
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
