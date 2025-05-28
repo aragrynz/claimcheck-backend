@@ -11,7 +11,7 @@ import os
 
 # Load secrets from .env file
 load_dotenv()
-SECRET_KEY = os.getenv("dmhSiWsj_c4DTQ3vS24KvEDMv4q_aZP-3eSOkfm5yMg")
+SECRET_KEY = os.getenv("zwwm8CKy2LmsemEWMONH5Bd9HmoKBVLJb4P9uMuYD6I")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
