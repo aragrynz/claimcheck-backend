@@ -101,6 +101,14 @@ def admin_page(current_user=Depends(get_current_user)):
 def terms_page():
     return load_html("terms.html")
 
+@app.get("/test-openai")
+def test_openai():
+    try:
+        models = client.models.list()
+        return {"models": [m.id for m in models.data[:5]]}
+    except Exception as e:
+        return {"error": str(e)}
+
 # === API Routes ===
 @app.get("/apikey")
 def get_key():
