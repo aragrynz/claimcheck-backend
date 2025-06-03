@@ -101,14 +101,6 @@ def admin_page(current_user=Depends(get_current_user)):
 def terms_page():
     return load_html("terms.html")
 
-@app.get("/test-openai")
-def test_openai():
-    try:
-        models = client.models.list()
-        return {"models": [m.id for m in models.data[:5]]}
-    except Exception as e:
-        return {"error": str(e)}
-
 # === API Routes ===
 @app.get("/apikey")
 def get_key():
@@ -167,7 +159,7 @@ async def process_chart(
             return JSONResponse(status_code=400, content={"error": "Please upload a file or provide chart text."})
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-turbo-preview",
             messages=[
                 {"role": "system", "content": "You are a certified medical coder. Determine CPT, ICD-10, and HCPCS codes."},
                 {"role": "user", "content": text_data}
@@ -200,7 +192,7 @@ async def generate_appeal(
             return JSONResponse(status_code=400, content={"error": "Please upload a file or provide appeal text."})
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-turbo-preview",
             messages=[
                 {"role": "system", "content": "You are a healthcare appeal writer. Draft a dispute letter."},
                 {"role": "user", "content": text_data}
