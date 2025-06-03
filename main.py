@@ -114,11 +114,18 @@ def get_key():
 
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        return JSONResponse(status_code=400, content={"error": "Invalid credentials"})
-    access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+    try:
+        user = authenticate_user(db, form_data.username, form_data.password)
+        if not user:
+            return JSONResponse(status_code=400, content={"error": "Invalid credentials"})
+
+        access_token = create_access_token(data={"sub": user.username})
+        return JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+
+    except Exception as e:
+        import traceback
+        print("❌ Login exception:", traceback.format_exc())
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/account")
 def get_account_info(current_user: models.User = Depends(get_current_user)):
