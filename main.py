@@ -68,6 +68,8 @@ def register_page():
     print("✅ GET /register route was triggered")
     return load_html("register.html")
 
+from fastapi.responses import RedirectResponse
+
 @app.post("/register")
 def register(
     username: str = Form(...),
@@ -76,12 +78,16 @@ def register(
 ):
     if db.query(models.User).filter(models.User.username == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
+
     hashed_password = get_password_hash(password)
     db_user = models.User(username=username, password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return {"message": "User registered successfully"}
+
+    # 👇 Redirect after success
+    return RedirectResponse(url="/login", status_code=303)
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page():
